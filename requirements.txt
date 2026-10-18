@@ -3,5 +3,6 @@ torch
 torchvision
 numpy
 Pillow
+mediapipe
 opencv-python-headless==4.10.0.84
 gradio
