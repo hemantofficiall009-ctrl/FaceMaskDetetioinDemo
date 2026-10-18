@@ -37,7 +37,7 @@ class MaskDetector:
             self._mp = mp.solutions.face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
         except Exception:
             self._mp = None
-            self._haar = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+            self._haar = cv.CascadeClassifier(cv.data.haarcascades + "haarcascade_frontalface_default.xml")
 
     def _detect(self, rgb):
         H, W = rgb.shape[:2]
@@ -48,7 +48,7 @@ class MaskDetector:
                 r = d.location_data.relative_bounding_box
                 boxes.append((int(r.xmin * W), int(r.ymin * H), int(r.width * W), int(r.height * H)))
         else:
-            gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+            gray = cv.cvtColor(rgb, cv.COLOR_RGB2GRAY)
             boxes = [tuple(b) for b in self._haar.detectMultiScale(gray, 1.1, 5, minSize=(40, 40))]
         return boxes
 
@@ -75,5 +75,5 @@ class MaskDetector:
             cv2.rectangle(out, (x1, y1), (x2, y2), color, t)
             text = f"{label.replace('_', ' ')} {conf:.0%}"
             scale = max(0.5, W / 1200)
-            cv2.putText(out, text, (x1, max(15, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, scale, color, max(1, t - 1))
+            cv.putText(out, text, (x1, max(15, y1 - 8)), cv.FONT_HERSHEY_SIMPLEX, scale, color, max(1, t - 1))
         return out, results
