@@ -1,4 +1,3 @@
-"""Shared inference code: face detection + mask classification."""
 import cv2
 import numpy as np
 import torch
@@ -6,7 +5,7 @@ import torch.nn as nn
 from PIL import Image
 from torchvision import models, transforms
 
-COLORS = {  # RGB
+COLORS = {
     "with_mask": (46, 160, 67),
     "without_mask": (215, 58, 73),
     "mask_weared_incorrect": (227, 160, 8),
@@ -31,13 +30,12 @@ class MaskDetector:
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
 
-        # MediaPipe finds masked faces much better than OpenCV's Haar cascade.
         try:
             import mediapipe as mp
             self._mp = mp.solutions.face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
         except Exception:
             self._mp = None
-            self._haar = cv.CascadeClassifier(cv.data.haarcascades + "haarcascade_frontalface_default.xml")
+            self._haar = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
     def _detect(self, rgb):
         H, W = rgb.shape[:2]
@@ -48,13 +46,12 @@ class MaskDetector:
                 r = d.location_data.relative_bounding_box
                 boxes.append((int(r.xmin * W), int(r.ymin * H), int(r.width * W), int(r.height * H)))
         else:
-            gray = cv.cvtColor(rgb, cv.COLOR_RGB2GRAY)
+            gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
             boxes = [tuple(b) for b in self._haar.detectMultiScale(gray, 1.1, 5, minSize=(40, 40))]
         return boxes
 
     @torch.no_grad()
-    def predict(self, rgb: np.ndarray, pad=0.15):
-        """rgb: HxWx3 uint8. Returns (annotated_rgb, list of dicts)."""
+    def predict(self, rgb, pad=0.15):
         out = rgb.copy()
         H, W = rgb.shape[:2]
         results = []
@@ -69,11 +66,10 @@ class MaskDetector:
             idx = int(probs.argmax())
             label, conf = self.classes[idx], float(probs[idx])
             results.append({"label": label, "confidence": conf, "box": (x1, y1, x2, y2)})
-
             color = COLORS.get(label, (255, 255, 255))
             t = max(2, W // 300)
             cv2.rectangle(out, (x1, y1), (x2, y2), color, t)
             text = f"{label.replace('_', ' ')} {conf:.0%}"
             scale = max(0.5, W / 1200)
-            cv.putText(out, text, (x1, max(15, y1 - 8)), cv.FONT_HERSHEY_SIMPLEX, scale, color, max(1, t - 1))
+            cv2.putText(out, text, (x1, max(15, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, scale, color, max(1, t - 1))
         return out, results
