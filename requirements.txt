@@ -4,5 +4,4 @@ torchvision
 numpy
 Pillow
 opencv-python-headless
-mediapipe
 gradio
