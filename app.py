@@ -13,13 +13,13 @@ detector = MaskDetector("model.pt")
 def run(image):
     if image is None:
         return None, "Upload an image first."
+    image = image.convert("RGB")
+    image.thumbnail((700, 700))   # badi photo ko chhota karo
     annotated, res = detector.predict(np.array(image))
     if not res:
         return annotated, "No faces detected."
     lines = [f"Face {i+1}: {r['label'].replace('_', ' ')} ({r['confidence']:.0%})" for i, r in enumerate(res)]
     return annotated, "\n".join(lines)
-
-
 demo = gr.Interface(
     fn=run,
     inputs=gr.Image(type="pil", sources=["upload", "webcam"], label="Photo"),
